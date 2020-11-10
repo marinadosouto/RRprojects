@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
 Course Project 1
 -------------------
 by Marina Do Souto
@@ -17,8 +22,6 @@ by Marina Do Souto
   First we create our table "activity" from the .csv file
 
 ```{r 1}
-
-setwd("D:/Beca Doc y Postdoc/Curso Reproducible Research")
 
 activity<-read.table("activity.csv",sep=",",header=T)
 
@@ -199,6 +202,3 @@ ggplot(data=NewTable, aes(interval, steps, color=DayType))+
   geom_line(size=1)
 
 ```
-
-  
-  
