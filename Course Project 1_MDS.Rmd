@@ -1,0 +1,204 @@
+Course Project 1
+-------------------
+by Marina Do Souto
+
+
+## Introduction
+
+  It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+
+  This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+
+## Results
+
+### Loading and preprocessing the data
+
+  First we create our table "activity" from the .csv file
+
+```{r 1}
+
+setwd("D:/Beca Doc y Postdoc/Curso Reproducible Research")
+
+activity<-read.table("activity.csv",sep=",",header=T)
+
+```
+
+### What is mean total number of steps taken per day?
+
+#### Number of steps taken per day
+
+  To calculate this, we create a new table with the sum of all the steps per day using the function "aggregate"
+
+```{r 2}
+
+totalsteps<-aggregate(steps~date,data=activity, sum, na.action=na.pass)
+
+```
+
+#### histogram of the total number of steps taken each day
+
+  For the next graphics we will use ggplot2 and gridExtra libraries.
+
+
+```{r 3}
+
+library(ggplot2)
+library(gridExtra)
+
+Histogram <- ggplot(totalsteps, aes(x=steps)) + 
+  geom_histogram()
+
+Histogram
+
+```
+
+#### Mean and median of the total number of steps taken per day
+
+  Here we calculate both mean and median based on the total steps per day
+
+```{r 4}
+
+mean(totalsteps$steps, na.rm=TRUE)
+median(totalsteps$steps, na.rm=TRUE)
+
+```
+
+### What is the average daily activity pattern?
+
+#### Time series plot
+
+  In this case, we need to aggregate the septs per interval and not per day. For that we use the same function than before. For the graphics, we use ggplot from ggplot2 package.
+
+
+```{r 5}
+
+intervalsteps<-aggregate(steps~interval,data=activity, mean)
+
+ggplot(data=intervalsteps, aes(interval, steps))+
+  geom_line(size=1) 
+
+```
+
+#### 5-minute interval with the maximum number of steps
+
+  Here we calculate which value of 5-mininterval corresponds to the maximun number of stepts registrated
+
+```{r 6} 
+  
+intervalsteps$interval[which.max(intervalsteps$steps)]
+
+```
+
+### Imputing missing values
+
+#### Total number of missing values in the dataset
+
+```{r 7}
+
+sum(is.na(activity))
+```
+
+#### Filling in all of the missing values and creating a new data set
+
+  To fill the NA's, we create a new dataset called "activity2". This dataset will include the mean values per 5-min interval 
+
+```{r 8}
+
+activity2<-activity
+activity2$meanintervalsteps<-intervalsteps$steps
+
+```
+
+  As a next step, we replace the NA's with the mean for each interval
+  
+```{r 9} 
+ 
+ for(i in 1:nrow(activity2)){
+  if(is.na(activity2$steps[i])){
+    activity2$steps[i]<-activity2$meanintervalsteps[i]
+  }else{
+    activity2$steps[i]<-activity2$steps[i]}
+}
+
+activity2$meanintervalsteps<-NULL
+
+totalsteps2<-aggregate(steps~date,data=activity2, sum)
+
+```
+
+#### Histogram of the total number of steps taken
+
+  We create a new histogram, and calculate the mean/median with this new data set. 
+  
+
+```{r 10}
+Histogram2 <- ggplot(totalsteps2, aes(x=steps)) + 
+  geom_histogram()
+
+mean(totalsteps2$steps)
+median(totalsteps2$steps)
+
+```
+
+We can compare graphically with the first histogram from the original data set
+
+```{r 11}
+
+grid.arrange(Histogram, Histogram2,nrow=2, ncol=1)
+
+```
+
+
+  Not only the median values but also the histogram graphic show some differences with the first data set. In this case filling in the null values does not seem to significantly modify the trend, but you have to be very careful when completing time series.
+  
+### Are there differences in activity patterns between weekdays and weekends?
+
+#### New factor variable in the dataset with two levels – “weekday” and “weekend”
+
+  We use the second data set "activity2". Using the date information, we clasify the day and day type (weekend or weekday) for each value (note that the name of the days appear in spanish)
+
+```{r 12}
+
+activity2$date<-as.Date(activity2$date)
+
+activity2$Day<-weekdays(activity2$date)
+
+for(i in 1:nrow(activity2)){
+  if(activity2$Day[i]=="sábado"){
+    activity2$DayType[i]<-"weekend"
+  }else{
+    activity2$DayType[i]<-"weekday"}
+}
+
+for(i in 1:nrow(activity2)){
+  if(activity2$Day[i]=="domingo"){
+    activity2$DayType[i]<-"weekend"
+  }else{
+    activity2$DayType[i]<-activity2$DayType[i]}
+
+}
+
+```
+
+####  time series plot
+
+  In the same plot we compare the time series between weekdays and weekends
+
+```{r 13}
+
+intervalstepsWE<-aggregate(steps~interval,data=subset(activity2,DayType=="weekend"), mean)
+intervalstepsWE$DayType<-"weekend"
+
+intervalstepsWD<-aggregate(steps~interval,data=subset(activity2,DayType=="weekday"), mean)
+intervalstepsWD$DayType<-"weekday"
+
+NewTable <- rbind(intervalstepsWE,intervalstepsWD)
+
+ggplot(data=NewTable, aes(interval, steps, color=DayType))+
+  geom_line(size=1)
+
+```
+
+  
+  
